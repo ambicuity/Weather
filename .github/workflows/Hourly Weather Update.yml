@@ -1,0 +1,52 @@
+name: Hourly Weather Update
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  weather-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Fetch weather updates
+        id: fetch-weather
+        run: |
+          API_KEY="b3c68b2c9eb541e0836135303242011"
+          CITIES=("Valsad" "Boston")
+          WEATHER_DATA=""
+          for CITY in "${CITIES[@]}"; do
+            RESPONSE=$(curl -s "http://api.weatherapi.com/v1/current.json?key=${API_KEY}&q=${CITY}")
+            TEMP=$(echo $RESPONSE | jq -r '.current.temp_c')
+            CONDITION=$(echo $RESPONSE | jq -r '.current.condition.text')
+            WEATHER_DATA+="$CITY,$TEMP,$CONDITION\n"
+          done
+          echo -e "$WEATHER_DATA" > weather_updates.csv
+
+      - name: Update README.md
+        run: |
+          WEATHER_TABLE="<table><tr><th>City</th><th>Temperature (°C)</th><th>Condition</th></tr>"
+          while IFS=, read -r CITY TEMP CONDITION; do
+            WEATHER_TABLE+="<tr><td>$CITY</td><td>$TEMP</td><td>$CONDITION</td></tr>"
+          done < weather_updates.csv
+          WEATHER_TABLE+="</table>"
+          sed -i '/<!-- WEATHER-UPDATE-START -->/,/<!-- WEATHER-UPDATE-END -->/c\<!-- WEATHER-UPDATE-START -->\n$WEATHER_TABLE\n<!-- WEATHER-UPDATE-END -->' README.md
+
+      - name: Commit and push README.md updates
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git stash
+          git pull --rebase
+          git stash pop
+          git add README.md weather_updates.csv
+          git commit -m "Update weather data in README.md"
+          git push https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}.git HEAD:main
