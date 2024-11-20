@@ -1,4 +1,5 @@
 # Weather Updates
 
 <!-- WEATHER-UPDATE-START -->
+$WEATHER_TABLE
 <!-- WEATHER-UPDATE-END -->
