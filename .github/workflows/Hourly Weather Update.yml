@@ -39,7 +39,7 @@ jobs:
             WEATHER_TABLE+="<tr><td>$CITY</td><td>$TEMP</td><td>$CONDITION</td></tr>"
           done < weather_updates.csv
           WEATHER_TABLE+="</table>"
-          perl -0777 -i -pe "s/<!-- WEATHER-UPDATE-START -->.*?<!-- WEATHER-UPDATE-END -->/<!-- WEATHER-UPDATE-START -->\n${WEATHER_TABLE}\n<!-- WEATHER-UPDATE-END -->/s" README.md
+          perl -0777 -i -pe 's/<!-- WEATHER-UPDATE-START -->.*?<!-- WEATHER-UPDATE-END -->/<!-- WEATHER-UPDATE-START -->\n".do{local $/; <STDIN>}."\n<!-- WEATHER-UPDATE-END -->/se' README.md <<< "$WEATHER_TABLE"
 
       - name: Commit and push README.md updates
         env:
