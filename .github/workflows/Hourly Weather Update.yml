@@ -19,7 +19,6 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Fetch weather updates
-        id: fetch-weather
         run: |
           API_KEY="b3c68b2c9eb541e0836135303242011"
           CITIES=("Valsad" "Boston")
@@ -36,10 +35,16 @@ jobs:
         run: |
           WEATHER_TABLE="<table><tr><th>City</th><th>Temperature (°C)</th><th>Condition</th></tr>"
           while IFS=, read -r CITY TEMP CONDITION; do
-            WEATHER_TABLE+="<tr><td>$CITY</td><td>$TEMP</td><td>$CONDITION</td></tr>"
+            WEATHER_TABLE="${WEATHER_TABLE}<tr><td>${CITY}</td><td>${TEMP}</td><td>${CONDITION}</td></tr>"
           done < weather_updates.csv
-          WEATHER_TABLE+="</table>"
-          perl -0777 -i -pe 's/<!-- WEATHER-UPDATE-START -->.*?<!-- WEATHER-UPDATE-END -->/<!-- WEATHER-UPDATE-START -->\n".do{local $/; <STDIN>}."\n<!-- WEATHER-UPDATE-END -->/se' README.md <<< "$WEATHER_TABLE"
+          WEATHER_TABLE="${WEATHER_TABLE}</table>"
+          # Use awk to replace the section between the markers
+          awk -v table="$WEATHER_TABLE" '
+            BEGIN {p=1}
+            /<!-- WEATHER-UPDATE-START -->/ {print; print table; p=0; next}
+            /<!-- WEATHER-UPDATE-END -->/ {p=1}
+            p
+          ' README.md > README.tmp && mv README.tmp README.md
 
       - name: Commit and push README.md updates
         env:
