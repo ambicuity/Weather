@@ -1,0 +1,32 @@
+{
+  "total_solved": 150,
+  "easy_solved": 80,
+  "medium_solved": 55,
+  "hard_solved": 15,
+  "current_streak": 5,
+  "max_streak": 23,
+  "last_solved": "2025-07-19",
+  "favorite_topics": [
+    "Array",
+    "String",
+    "Dynamic Programming",
+    "Tree"
+  ],
+  "recent_problems": [
+    {
+      "name": "Two Sum",
+      "difficulty": "Easy",
+      "date": "2024-01-15"
+    },
+    {
+      "name": "Add Two Numbers",
+      "difficulty": "Medium",
+      "date": "2024-01-14"
+    },
+    {
+      "name": "Longest Substring",
+      "difficulty": "Medium",
+      "date": "2024-01-13"
+    }
+  ]
+}
