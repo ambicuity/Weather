@@ -33,13 +33,71 @@ jobs:
 
       - name: Update README.md
         run: |
-          WEATHER_TABLE="<table><tr><th>City</th><th>Temperature (°C)</th><th>Condition</th></tr>"
+          # Create a temporary script for table generation
+          cat > update_table.sh << 'SCRIPT_EOF'
+          #!/bin/bash
+          
+          # Function to get weather emoji
+          get_weather_emoji() {
+            local condition="$1"
+            case "$condition" in
+              *"Sunny"*|*"Clear"*) echo "☀️" ;;
+              *"rain"*|*"Rain"*|*"shower"*|*"Shower"*) echo "🌧️" ;;
+              *"cloud"*|*"Cloud"*|*"Overcast"*) echo "☁️" ;;
+              *"snow"*|*"Snow"*) echo "❄️" ;;
+              *"storm"*|*"Storm"*|*"thunder"*|*"Thunder"*) echo "⛈️" ;;
+              *"fog"*|*"Fog"*|*"mist"*|*"Mist"*) echo "🌫️" ;;
+              *"wind"*|*"Wind"*) echo "💨" ;;
+              *"Partly cloudy"*) echo "⛅" ;;
+              *) echo "🌤️" ;;
+            esac
+          }
+          
+          # Start building the enhanced table
+          WEATHER_TABLE='<div align="center">
+          <table style="border-collapse: collapse; margin: 25px 0; font-size: 0.9em; font-family: -apple-system, BlinkMacSystemFont, '"'"'Segoe UI'"'"', '"'"'Roboto'"'"', sans-serif; min-width: 400px; border-radius: 5px 5px 0 0; overflow: hidden; box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);">
+            <thead style="background-color: #009879; color: #ffffff; text-align: left; font-weight: bold;">
+              <tr>
+                <th style="padding: 15px 20px; border-bottom: 1px solid #dddddd;">🏙️ City</th>
+                <th style="padding: 15px 20px; border-bottom: 1px solid #dddddd;">🌡️ Temperature</th>
+                <th style="padding: 15px 20px; border-bottom: 1px solid #dddddd;">☁️ Condition</th>
+              </tr>
+            </thead>
+            <tbody>'
+          
+          # Add rows with alternating colors
+          row_count=0
           while IFS=, read -r CITY TEMP CONDITION; do
-            WEATHER_TABLE="${WEATHER_TABLE}<tr><td>${CITY}</td><td>${TEMP}</td><td>${CONDITION}</td></tr>"
+            if [ -n "$CITY" ] && [ -n "$TEMP" ] && [ -n "$CONDITION" ]; then
+              weather_emoji=$(get_weather_emoji "$CONDITION")
+              if [ $((row_count % 2)) -eq 0 ]; then
+                bg_style="background-color: #f3f3f3;"
+              else
+                bg_style=""
+              fi
+              WEATHER_TABLE="${WEATHER_TABLE}
+              <tr style=\"border-bottom: 1px solid #dddddd;\">
+                <td style=\"padding: 12px 20px; ${bg_style}\"><strong>${CITY}</strong></td>
+                <td style=\"padding: 12px 20px; ${bg_style} text-align: center;\"><span style=\"color: #009879; font-weight: bold;\">${TEMP}°C</span></td>
+                <td style=\"padding: 12px 20px; ${bg_style}\">${weather_emoji} ${CONDITION}</td>
+              </tr>"
+              row_count=$((row_count + 1))
+            fi
           done < weather_updates.csv
-          WEATHER_TABLE="${WEATHER_TABLE}</table>"
+          
+          WEATHER_TABLE="${WEATHER_TABLE}
+            </tbody>
+          </table>
+          </div>"
+          
+          echo "$WEATHER_TABLE"
+          SCRIPT_EOF
+          
+          chmod +x update_table.sh
+          TABLE_CONTENT=$(bash update_table.sh)
+          
           # Use awk to replace the section between the markers
-          awk -v table="$WEATHER_TABLE" '
+          awk -v table="$TABLE_CONTENT" '
             BEGIN {p=1}
             /<!-- WEATHER-UPDATE-START -->/ {print; print table; p=0; next}
             /<!-- WEATHER-UPDATE-END -->/ {p=1}
