@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  weather-api:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - WEATHER_API_KEY=${WEATHER_API_KEY:-your_api_key_here}
+      - DATABASE_URL=sqlite:///data/weather.db
+      - REDIS_URL=redis://redis:6379/0
+      - LOG_LEVEL=INFO
+    volumes:
+      - weather_data:/app/data
+      - weather_logs:/app/logs
+    depends_on:
+      - redis
+    restart: unless-stopped
+    command: python -m src.main serve --host 0.0.0.0 --port 5000
+
+  weather-scheduler:
+    build: .
+    environment:
+      - WEATHER_API_KEY=${WEATHER_API_KEY:-your_api_key_here}
+      - DATABASE_URL=sqlite:///data/weather.db
+      - REDIS_URL=redis://redis:6379/0
+      - LOG_LEVEL=INFO
+    volumes:
+      - weather_data:/app/data
+      - weather_logs:/app/logs
+    depends_on:
+      - redis
+    restart: unless-stopped
+    command: python -m src.main scheduler
+
+  weather-dashboard:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - FLASK_ENV=production
+    volumes:
+      - ./templates:/app/templates:ro
+    depends_on:
+      - weather-api
+    restart: unless-stopped
+    command: python -c "
+      from flask import Flask, render_template;
+      from src.api import weather_api;
+      
+      @weather_api.app.route('/dashboard')
+      def dashboard():
+        return render_template('dashboard.html');
+      
+      weather_api.run(host='0.0.0.0', port=8080)
+      "
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - weather-api
+      - weather-dashboard
+    restart: unless-stopped
+
+volumes:
+  weather_data:
+  weather_logs:
+  redis_data:

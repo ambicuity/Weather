@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            min-height: 100vh;
+            color: #2d3436;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .search-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .search-button {
+            padding: 12px 24px;
+            background: #00b894;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        .search-button:hover {
+            background: #00a085;
+        }
+
+        .weather-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .weather-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .weather-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .weather-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .city-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+
+        .last-updated {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .weather-main {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .temperature {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .condition {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .weather-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .alerts-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .alert-item {
+            background: #ff7675;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .alert-item.medium {
+            background: #fdcb6e;
+            color: #2d3436;
+        }
+
+        .alert-item.low {
+            background: #55efc4;
+            color: #2d3436;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+        }
+
+        .error {
+            background: #ff7675;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .stats-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #0984e3;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .search-form {
+                flex-direction: column;
+            }
+
+            .weather-details {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌤️ Weather Dashboard</h1>
+            <p>Real-time weather monitoring and forecasting</p>
+        </div>
+
+        <div class="search-section">
+            <div class="search-form">
+                <input type="text" id="cityInput" class="search-input" placeholder="Enter city name (e.g., London, New York, Tokyo)">
+                <button onclick="searchWeather()" class="search-button">Search Weather</button>
+                <button onclick="loadDefaultCities()" class="search-button">Load Default Cities</button>
+            </div>
+        </div>
+
+        <div id="errorContainer"></div>
+        <div id="loadingContainer"></div>
+
+        <div class="alerts-section" id="alertsSection" style="display: none;">
+            <h2>🚨 Weather Alerts</h2>
+            <div id="alertsContainer"></div>
+        </div>
+
+        <div class="weather-grid" id="weatherGrid"></div>
+
+        <div class="stats-section">
+            <h2>📊 System Statistics</h2>
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalRecords">0</div>
+                    <div class="stat-label">Weather Records</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="uniqueLocations">0</div>
+                    <div class="stat-label">Locations</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="activeAlerts">0</div>
+                    <div class="stat-label">Active Alerts</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="dbSize">0</div>
+                    <div class="stat-label">DB Size (MB)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentData = [];
+
+        // Load default cities on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDefaultCities();
+            loadStats();
+            loadAlerts();
+            
+            // Auto-refresh every 5 minutes
+            setInterval(() => {
+                if (currentData.length > 0) {
+                    refreshWeatherData();
+                }
+                loadStats();
+                loadAlerts();
+            }, 300000);
+
+            // Allow Enter key in search input
+            document.getElementById('cityInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchWeather();
+                }
+            });
+        });
+
+        function showLoading() {
+            document.getElementById('loadingContainer').innerHTML = 
+                '<div class="loading">🔄 Loading weather data...</div>';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingContainer').innerHTML = '';
+        }
+
+        function showError(message) {
+            document.getElementById('errorContainer').innerHTML = 
+                `<div class="error">❌ Error: ${message}</div>`;
+            setTimeout(() => {
+                document.getElementById('errorContainer').innerHTML = '';
+            }, 5000);
+        }
+
+        async function searchWeather() {
+            const city = document.getElementById('cityInput').value.trim();
+            if (!city) {
+                showError('Please enter a city name');
+                return;
+            }
+
+            showLoading();
+            
+            try {
+                const response = await fetch(`/api/weather/${encodeURIComponent(city)}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentData = [data.data];
+                    displayWeatherData(currentData);
+                    document.getElementById('cityInput').value = '';
+                } else {
+                    showError(data.error || 'Failed to fetch weather data');
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function loadDefaultCities() {
+            showLoading();
+            
+            try {
+                const defaultCities = ['London', 'New York', 'Tokyo', 'Paris', 'Sydney'];
+                const responses = await Promise.all(
+                    defaultCities.map(city => 
+                        fetch(`/api/weather/${encodeURIComponent(city)}`)
+                        .then(res => res.json())
+                        .catch(err => ({ success: false, error: err.message }))
+                    )
+                );
+                
+                currentData = responses.filter(data => data.success).map(data => data.data);
+                displayWeatherData(currentData);
+                
+                if (currentData.length === 0) {
+                    showError('Failed to load any weather data');
+                }
+            } catch (error) {
+                showError('Error loading default cities: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function refreshWeatherData() {
+            if (currentData.length === 0) return;
+            
+            const cities = currentData.map(data => data.weather.location.name);
+            
+            try {
+                const responses = await Promise.all(
+                    cities.map(city => 
+                        fetch(`/api/weather/${encodeURIComponent(city)}`)
+                        .then(res => res.json())
+                        .catch(err => ({ success: false, error: err.message }))
+                    )
+                );
+                
+                currentData = responses.filter(data => data.success).map(data => data.data);
+                displayWeatherData(currentData);
+            } catch (error) {
+                console.error('Error refreshing weather data:', error);
+            }
+        }
+
+        function displayWeatherData(weatherDataArray) {
+            const grid = document.getElementById('weatherGrid');
+            grid.innerHTML = '';
+
+            weatherDataArray.forEach(data => {
+                const weather = data.weather;
+                const alerts = data.alerts || [];
+                
+                const card = document.createElement('div');
+                card.className = 'weather-card';
+                
+                const lastUpdated = new Date(weather.last_updated).toLocaleString();
+                
+                card.innerHTML = `
+                    <div class="weather-header">
+                        <div class="city-name">${weather.location.name}, ${weather.location.country}</div>
+                        <div class="last-updated">${lastUpdated}</div>
+                    </div>
+                    
+                    <div class="weather-main">
+                        <div class="temperature">${weather.temperature_c}°C</div>
+                        <div class="condition">${weather.condition}</div>
+                        ${alerts.length > 0 ? `<div style="color: #ff7675; font-weight: bold;">⚠️ ${alerts.length} Alert(s)</div>` : ''}
+                    </div>
+                    
+                    <div class="weather-details">
+                        <div class="detail-item">
+                            <span>Feels like:</span>
+                            <span>${weather.feels_like_c}°C</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>Humidity:</span>
+                            <span>${weather.humidity}%</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>Wind:</span>
+                            <span>${weather.wind_speed_kph} km/h ${weather.wind_direction}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>Pressure:</span>
+                            <span>${weather.pressure_mb} mb</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>Visibility:</span>
+                            <span>${weather.visibility_km} km</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>UV Index:</span>
+                            <span>${weather.uv_index}</span>
+                        </div>
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+
+        async function loadAlerts() {
+            try {
+                const response = await fetch('/api/alerts');
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayAlerts(data.data);
+                }
+            } catch (error) {
+                console.error('Error loading alerts:', error);
+            }
+        }
+
+        function displayAlerts(alertsData) {
+            const alertsSection = document.getElementById('alertsSection');
+            const alertsContainer = document.getElementById('alertsContainer');
+            
+            if (alertsData.total_alerts > 0) {
+                alertsSection.style.display = 'block';
+                alertsContainer.innerHTML = `
+                    <div class="alert-item">
+                        <strong>Total Active Alerts: ${alertsData.total_alerts}</strong>
+                    </div>
+                `;
+                
+                // Display alerts by severity
+                Object.entries(alertsData.by_severity).forEach(([severity, count]) => {
+                    if (count > 0) {
+                        const alertDiv = document.createElement('div');
+                        alertDiv.className = `alert-item ${severity}`;
+                        alertDiv.innerHTML = `<strong>${severity.toUpperCase()}:</strong> ${count} alert(s)`;
+                        alertsContainer.appendChild(alertDiv);
+                    }
+                });
+            } else {
+                alertsSection.style.display = 'none';
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const stats = data.data.database;
+                    document.getElementById('totalRecords').textContent = stats.current_weather_records.toLocaleString();
+                    document.getElementById('uniqueLocations').textContent = stats.unique_locations;
+                    document.getElementById('activeAlerts').textContent = stats.active_alerts;
+                    document.getElementById('dbSize').textContent = stats.database_size_mb;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+    </script>
+</body>
+</html>
