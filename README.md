@@ -1,5 +1,5 @@
 # Weather Updates
 
 <!-- WEATHER-UPDATE-START -->
-<table><tr><th>City</th><th>Temperature (°C)</th><th>Condition</th></tr><tr><td>Valsad</td><td>24.1</td><td>Light rain shower</td></tr><tr><td>Boston</td><td>11.7</td><td>Overcast</td></tr><tr><td></td><td></td><td></td></tr></table>
+<table><tr><th>City</th><th>Temperature (°C)</th><th>Condition</th></tr><tr><td>Valsad</td><td>24.1</td><td>Patchy light drizzle</td></tr><tr><td>Boston</td><td>11.7</td><td>Overcast</td></tr><tr><td></td><td></td><td></td></tr></table>
 <!-- WEATHER-UPDATE-END -->
